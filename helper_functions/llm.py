@@ -3,12 +3,12 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import tiktoken
 
-
 load_dotenv('.env')
 
 # Pass the API Key to the OpenAI Client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
+# Function for Generating Embeddings
 def get_embedding(input, model='text-embedding-3-small'):
     response = client.embeddings.create(
         input=input,
