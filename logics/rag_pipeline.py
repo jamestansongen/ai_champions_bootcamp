@@ -5,6 +5,7 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from langchain_experimental.text_splitter import SemanticChunker
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 import time
 from langchain.vectorstores import FAISS
@@ -29,7 +30,7 @@ llm = ChatOpenAI(
     messages=[
         {
             "role": "system",
-            "content": "You are an assistant that answers based ONLY on provided context. Do not hallucinate."
+            "content": "You are a researcher that answers based ONLY on the sources available to you. Examine what you have thoroughly and do not hallucinate."
         }
     ]
 )
@@ -92,10 +93,27 @@ def add_uploaded_documents(uploaded_file) -> List[Document]:
 def split_documents(documents: List[Document]) -> List[Document]:
     if not documents:
         raise ValueError("No documents to split.")
-    
-    text_splitter = SemanticChunker(embedding_model)
-    chunks = text_splitter.split_documents(documents)
-    return chunks
+
+    # Step 1: Semantic chunking (preserves meaning)
+    semantic_splitter = SemanticChunker(embedding_model)
+    semantic_chunks = semantic_splitter.split_documents(documents)
+
+    # Step 2: Recursive splitting (ensures size control & overlap)
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    recursive_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,  
+        chunk_overlap=200
+    )
+
+    final_chunks = []
+    for chunk in semantic_chunks:
+        if len(chunk.page_content) > 1000:
+            smaller_chunks = recursive_splitter.split_documents([chunk])
+            final_chunks.extend(smaller_chunks)
+        else:
+            final_chunks.append(chunk)
+
+    return final_chunks
 
 
 ### Step 3. Storage ###
@@ -127,7 +145,7 @@ def build_qa_chain(vectordb, strategy="mmr"):
     if strategy == "mmr":
         retriever = vectordb.as_retriever(
             search_type="mmr",
-            search_kwargs={"k": 4, "fetch_k": 10}
+            search_kwargs={"k": 15, "fetch_k": 50}
         )
     else:
         raise ValueError(f"Unsupported retrieval strategy: {strategy}")
@@ -144,7 +162,7 @@ def answer_query_with_llm_filter(user_prompt: str, strategy="mmr") -> str:
     if strategy == "mmr":
         retriever = vectordb.as_retriever(
             search_type="mmr",
-            search_kwargs={"k": 8}
+            search_kwargs={"k": 15, "fetch_k": 50}
         )
     else:
         raise ValueError(f"Unsupported retrieval strategy: {strategy}")
@@ -174,6 +192,7 @@ Answer:"""
     
     # Step 4: Generate answer with LLM
     response = get_completion_by_messages([
+        {"role": "system", "content": "You are a researcher that answers based ONLY on the sources available to you. Examine what you have thoroughly and do not hallucinate."},
         {"role": "user", "content": final_prompt}
     ])
     
@@ -214,11 +233,14 @@ def process_uploaded_document(uploaded_file):
     persist_vector_store(chunks)  # Optionally re-save index
 
 @timed
-def filter_documents_with_llm(docs: List[Document], query: str) -> List[Document]:
+def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 5) -> List[Document]:
     filtered_docs = []
     for doc in docs:
         prompt = f"""
-You are an AI assistant helping to filter documents for a question.
+You are a researcher that answers based ONLY on the sources available to you.
+Examine what you have thoroughly and do not hallucinate.
+
+Your task is to determine whether this document is useful for answering the given question. Score this document from 0 to 10 for how useful it is to answer the question.
 
 Question: {query}
 
@@ -227,13 +249,20 @@ Document content:
 {doc.page_content}
 \"\"\"
 
-Is this document useful for answering the question? Reply only with 'Yes' or 'No'."""
+Is this document useful for answering the question? Reply only with a score of 0 to 10."""
         
         response = get_completion_by_messages([
+            {"role": "system", "content": "You are a researcher that answers based ONLY on the sources available to you. Examine what you have thoroughly and do not hallucinate."},
             {"role": "user", "content": prompt}
         ])
         
-        if "yes" in response.lower():
-            filtered_docs.append(doc)
+        try:
+            score = int(response.strip())
+            if score >= threshold:
+                filtered_docs.append(doc)
+        except ValueError:
+            # If LLM gave something unexpected, we skip this doc
+            continue
+
     
     return filtered_docs
