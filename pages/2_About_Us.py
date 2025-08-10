@@ -1,27 +1,55 @@
 import streamlit as st
 
-# from helper_functions import utility check_password
-from helper_functions.utility import check_password
-
-# Check if the password is correct.  
-if not check_password():  
-    st.stop()
-
-# region <--------- Streamlit App Configuration --------->
+# Set page configuration
 st.set_page_config(
-    layout="centered",
-    page_title="My Streamlit App"
+    page_title="About Us",
+    layout="centered"
 )
-# endregion <--------- Streamlit App Configuration --------->
 
-st.title("About this App")
+# Page title
+st.title("About Us")
 
-st.write("This is a Streamlit App that demonstrates how to use the OpenAI API to generate text completions.")
+# Project Scope
+st.header("Project Scope")
+st.write("""
+The project delivers a deployed web application accessible via a public URL on Streamlit Community Cloud. 
+The application is password-protected to prevent unauthorised access and uses a FAISS local file-based vector store 
+to implement a Retrieval Augmented Generation (RAG) pipeline. The application can answer questions based on a static 
+repository of PDF documents as well as PDFs uploaded by the user.
 
-with st.expander("How to use this App"):
-    st.write("1. Enter your prompt in the text area.")
-    st.write("2. Click the 'Submit' button.")
-    st.write("3. The app will generate a text completion based on your prompt.")
+This model focuses on the domain of Singapore’s urban development, consolidating publications into a central 
+research database. The aim is to present a coherent narrative in this field and streamline the review process, 
+reducing the time officers spend going through large volumes of material.
 
+The project also includes documentation consisting of the following pages:
+- About Us: project scope, objectives, data source, and features.
+- Methodology: explanation of the technical implementation details and a flowchart to illustrate the system workflow.
+""")
 
-# Just write more about the project, motivation
+# Objectives
+st.header("Objectives")
+st.write("""
+The objective of this project is to develop an application that enables users to upload PDF documents and 
+leverage a LLM to process and extract relevant information. The system will summarise 
+and present key insights for research or reference purposes, significantly reducing the time required to 
+review large volumes of lengthy documents.
+""")
+
+# Data Source
+st.header("Data Source")
+st.write("""
+At this stage, the system accepts only PDF documents, with a maximum file size of 200 MB. 
+The initial dataset comprises publications sourced from the 
+[Centre for Liveable Cities Knowledge Hub](https://knowledgehub.clc.gov.sg/), selected for its comprehensive 
+collection of books on Singapore’s urban development.
+""")
+
+# Features
+st.header("Features")
+st.write("""
+- Secure Access – Password login to prevent unauthorised use.  
+- Preloaded Knowledge Base – Static repository of documents serving as a base reference.  
+- Document Upload – Support for uploading PDF files (up to 200 MB) for analysis.  
+- RAG Pipeline – Multi-stage retrieval process (pre-retrieval, retrieval, post-retrieval) to maximise relevance and accuracy.  
+- Prompt Engineering – Designed to minimise prompt injection risks and prevent hallucinations.  
+""")

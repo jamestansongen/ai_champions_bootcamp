@@ -1,4 +1,6 @@
+# Import relevant libraries
 import os
+import time
 from typing import List
 from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings import OpenAIEmbeddings
@@ -7,7 +9,6 @@ from langchain.chat_models import ChatOpenAI
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
-import time
 from langchain.vectorstores import FAISS
 from helper_functions.llm import get_completion_by_messages
 
@@ -24,7 +25,7 @@ embedding_model = OpenAIEmbeddings(
 )
 
 llm = ChatOpenAI(
-    model=os.getenv("OPENAI_MODEL_NAME"),  # uses gpt-4o-mini from your .env
+    model=os.getenv("OPENAI_MODEL_NAME"),  # uses gpt-4o-mini from .env file or set in Streamlit
     temperature=0.2,
     openai_api_key=os.getenv("OPENAI_API_KEY"), 
     messages=[
@@ -39,7 +40,7 @@ vector_db_directory = "./vector_db"
 # Collection name
 collection_name='embedding_semantic'
 
-# Function to check time
+# Function to check time (used for local development)
 def timed(func):
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -94,11 +95,11 @@ def split_documents(documents: List[Document]) -> List[Document]:
     if not documents:
         raise ValueError("No documents to split.")
 
-    # Step 1: Semantic chunking (preserves meaning)
+    # Part 1: Semantic chunking to preserves meaning
     semantic_splitter = SemanticChunker(embedding_model)
     semantic_chunks = semantic_splitter.split_documents(documents)
 
-    # Step 2: Recursive splitting (ensures size control & overlap)
+    # Part 2: Recursive splitting to ensures size control & overlap
     from langchain.text_splitter import RecursiveCharacterTextSplitter
     recursive_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,  
@@ -137,10 +138,11 @@ def load_vector_store():
     )
     return vectordb
 
-
 ### Step 4. Retrieval - MMR ###
-# MMR: When you want a balance of relevance and diversity, e.g., in exploratory or general-purpose retrieval.
-
+# MMR: Provides a balance of relevance and diversity (e.g., in exploratory or general-purpose retrieval)
+# Other Strategies can be added in future development
+# fetch_k: number of top documents to fetch from vector store before applying MMR. Larger value for more relevance and diversity
+# k: final number of documents returned after applying MMR filtering. Need balance between small (risk relevant info) and large (can increase token cost and possibly add noise)
 def build_qa_chain(vectordb, strategy="mmr"):
     if strategy == "mmr":
         retriever = vectordb.as_retriever(
@@ -167,10 +169,10 @@ def answer_query_with_llm_filter(user_prompt: str, strategy="mmr") -> str:
     else:
         raise ValueError(f"Unsupported retrieval strategy: {strategy}")
     
-    # Step 1: Retrieve raw docs
+    # Part 1: Retrieve raw documents
     raw_docs = retriever.get_relevant_documents(user_prompt)
     
-    # Step 2: Filter docs with LLM
+    # Step 2: Filter raw documents with LLM
     filtered_docs = filter_documents_with_llm(raw_docs, user_prompt)
     
     if not filtered_docs:
@@ -198,41 +200,8 @@ Answer:"""
     
     return response
 
-
-# Helper function to process documents (both preloaded and optional uploaded documents)
-def process_all_documents(uploaded_file=None):
-    # Load preloaded folder docs
-    folder_docs = load_documents_from_folder("data")
-    # Add uploaded docs if available
-    if uploaded_file is not None:
-        uploaded_docs = add_uploaded_documents(uploaded_file)
-        all_docs = folder_docs + uploaded_docs
-    else:
-        all_docs = folder_docs
-    # Split chunks
-    chunks = split_documents(all_docs)
-    # Persist vector store
-    vectordb = persist_vector_store(chunks)
-    return vectordb
-
 @timed
-def process_existing_documents(folder_path="data"):
-    """Loads, splits, and persists vector store from static folder"""
-    folder_docs = load_documents_from_folder(folder_path)
-    chunks = split_documents(folder_docs)
-    persist_vector_store(chunks)
-
-@timed
-def process_uploaded_document(uploaded_file):
-    """Adds an uploaded file to the vector store incrementally"""
-    uploaded_docs = add_uploaded_documents(uploaded_file)
-    chunks = split_documents(uploaded_docs)
-
-    vectordb = load_vector_store()
-    vectordb.add_documents(chunks)
-    persist_vector_store(chunks)  # Optionally re-save index
-
-@timed
+# Helper function to filter relevant documents to use to answer question
 def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 5) -> List[Document]:
     filtered_docs = []
     for doc in docs:
@@ -264,5 +233,23 @@ Is this document useful for answering the question? Reply only with a score of 0
             # If LLM gave something unexpected, we skip this doc
             continue
 
-    
     return filtered_docs
+
+@timed
+# Helper function to process preloaded documents
+def process_existing_documents(folder_path="data"):
+    """Loads, splits, and persists vector store from static folder"""
+    folder_docs = load_documents_from_folder(folder_path)
+    chunks = split_documents(folder_docs)
+    persist_vector_store(chunks)
+
+@timed
+# Helper function to process optional uploaded documents
+def process_uploaded_document(uploaded_file):
+    """Adds an uploaded file to the vector store incrementally"""
+    uploaded_docs = add_uploaded_documents(uploaded_file)
+    chunks = split_documents(uploaded_docs)
+
+    vectordb = load_vector_store()
+    vectordb.add_documents(chunks)
+    persist_vector_store(chunks)

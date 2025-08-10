@@ -1,12 +1,12 @@
-# Set up and run this Streamlit App
+# Import relevant libraries
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
 
-# From helper_functions import check_password
+# Import function to check password
 from helper_functions.utility import check_password
 
-# From helper functions import handle_document_upload
+# Import function to process documents
 from logics.rag_pipeline import process_existing_documents, process_uploaded_document, answer_query_with_llm_filter
 
 # Load environment variables from .env
@@ -22,15 +22,15 @@ if 'doc_uploaded' not in st.session_state:
 # region <--------- Streamlit App Configuration --------->
 st.set_page_config(
     layout="centered",
-    page_title="My Streamlit App"
+    page_title="DocuMind: From pages to insights"
 )
 # endregion <--------- Streamlit App Configuration --------->
 
-st.title("Streamlit App")
+st.title("DocuMind: From pages to insights")
 
 # Process static PDFs on first load
 if 'existing_docs_loaded' not in st.session_state:
-    with st.spinner("Processing initial documents..."):
+    with st.spinner("Processing initial documents...this may take a few minutes"):
         try:
             process_existing_documents(folder_path="data")
             st.success("Static documents processed and vector store created.")

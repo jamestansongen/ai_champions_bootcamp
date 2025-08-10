@@ -1,6 +1,8 @@
+# Import relevant libraries
 import streamlit as st
 import hmac
 
+# Function for checking if user has entered password and remember it even as you switch pages
 def check_password():
     """Returns True if the user has the correct password stored in secrets.toml"""
     

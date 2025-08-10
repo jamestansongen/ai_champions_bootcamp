@@ -1,26 +1,20 @@
 import streamlit as st
+import os
 
-# from helper_functions import utility check_password
-from helper_functions.utility import check_password
-
-# Check if the password is correct.  
-if not check_password():  
-    st.stop()
-
-# region <--------- Streamlit App Configuration --------->
+# Set page configuration
 st.set_page_config(
-    layout="centered",
-    page_title="My Streamlit App"
+    page_title="Methodology",
+    layout="centered"
 )
-# endregion <--------- Streamlit App Configuration --------->
 
-st.title("About this App")
+# Page title
+st.title("Methodology")
 
-st.write("This is a Streamlit App that demonstrates how to use the OpenAI API to generate text completions.")
+# Path to the PNG file
+png_path = os.path.join(os.path.dirname(__file__), "..", "flowchart.png")
 
-with st.expander("How to use this App"):
-    st.write("1. Enter your prompt in the text area.")
-    st.write("2. Click the 'Submit' button.")
-    st.write("3. The app will generate a text completion based on your prompt.")
-
-# Execute the project and add flowchart
+# Display flowchart if exists
+if os.path.exists(png_path):
+    st.image(png_path, caption="DocuMind flowchart", use_column_width=True)
+else:
+    st.warning(f"Flowchart not found at: {png_path}")
