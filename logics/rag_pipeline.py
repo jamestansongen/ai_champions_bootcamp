@@ -1,7 +1,7 @@
 # Import relevant libraries
 import os
 import time
-from typing import List
+from typing import List, Dict, Any
 from langchain.document_loaders import PyPDFLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
@@ -89,7 +89,7 @@ def add_uploaded_documents(uploaded_file) -> List[Document]:
 
     return docs
 
-### Step 2. Splitting documents into sematic chunks ###
+### Step 2. Splitting documents into semantic chunks ###
 @timed
 def split_documents(documents: List[Document]) -> List[Document]:
     if not documents:
@@ -116,10 +116,9 @@ def split_documents(documents: List[Document]) -> List[Document]:
 
     return final_chunks
 
-
 ### Step 3. Storage ###
 
-# Function to create or update Chroma vectorstore and persist
+# Function to create or update FAISS vectorstore and persist
 @timed  
 def persist_vector_store(chunks: List[Document]):
     vectordb = FAISS.from_documents(
@@ -129,7 +128,7 @@ def persist_vector_store(chunks: List[Document]):
     vectordb.save_local("./faiss_index")  # Save index locally
     return vectordb
 
-# Load persisted Chroma vectorstore
+# Load persisted FAISS vectorstore
 def load_vector_store():
     vectordb = FAISS.load_local(
         "./faiss_index",
@@ -139,10 +138,6 @@ def load_vector_store():
     return vectordb
 
 ### Step 4. Retrieval - MMR ###
-# MMR: Provides a balance of relevance and diversity (e.g., in exploratory or general-purpose retrieval)
-# Other Strategies can be added in future development
-# fetch_k: number of top documents to fetch from vector store before applying MMR. Larger value for more relevance and diversity
-# k: final number of documents returned after applying MMR filtering. Need balance between small (risk relevant info) and large (can increase token cost and possibly add noise)
 def build_qa_chain(vectordb, strategy="mmr"):
     if strategy == "mmr":
         retriever = vectordb.as_retriever(
@@ -154,13 +149,67 @@ def build_qa_chain(vectordb, strategy="mmr"):
 
     return RetrievalQA.from_llm(llm=llm, retriever=retriever)
 
-### Step 5/6. Main functions (post-retrieval implemented in answer_query_with_llm_filter)
+### NEW: Memory Management Functions ###
 
-# Main query function for Streamlit app
-def answer_query_with_llm_filter(user_prompt: str, strategy="mmr") -> str:
+def format_chat_history(chat_history: List[Dict[str, str]], max_turns: int = 5) -> str:
+    """Format chat history for context. Keep only last max_turns exchanges."""
+    if not chat_history:
+        return ""
+    
+    # Keep only the most recent exchanges
+    recent_history = chat_history[-max_turns*2:] if len(chat_history) > max_turns*2 else chat_history
+    
+    formatted_history = []
+    for entry in recent_history:
+        if entry["role"] == "user":
+            formatted_history.append(f"Previous Question: {entry['content']}")
+        elif entry["role"] == "assistant":
+            formatted_history.append(f"Previous Answer: {entry['content']}")
+    
+    return "\n".join(formatted_history)
+
+def enhance_query_with_context(user_prompt: str, chat_history: List[Dict[str, str]]) -> str:
+    """Enhance user query with conversation context to improve retrieval."""
+    if not chat_history:
+        return user_prompt
+    
+    # Create a context-enhanced query
+    history_context = format_chat_history(chat_history, max_turns=3)
+    
+    context_prompt = f"""
+Based on the following conversation history, rephrase or expand the current question to be more specific and standalone.
+
+{history_context}
+
+Current Question: {user_prompt}
+
+Enhanced Question (be specific and include relevant context):"""
+    
+    try:
+        enhanced_query = get_completion_by_messages([
+            {"role": "system", "content": "You enhance questions to be more specific and standalone based on conversation context. Keep the enhanced question focused and relevant."},
+            {"role": "user", "content": context_prompt}
+        ])
+        return enhanced_query.strip()
+    except Exception as e:
+        print(f"Error enhancing query: {e}")
+        return user_prompt
+
+### Step 5/6. Enhanced Main Functions with Memory ###
+
+def answer_query_with_llm_filter(user_prompt: str, chat_history: List[Dict[str, str]] = None, strategy="mmr") -> str:
+    """Main query function with conversation memory support."""
+    if chat_history is None:
+        chat_history = []
+    
     vectordb = load_vector_store()
     
-    # Choose retriever based on strategy
+    # Step 1: Enhance query with conversation context
+    enhanced_query = enhance_query_with_context(user_prompt, chat_history)
+    print(f"Original query: {user_prompt}")
+    print(f"Enhanced query: {enhanced_query}")
+    
+    # Step 2: Choose retriever based on strategy
     if strategy == "mmr":
         retriever = vectordb.as_retriever(
             search_type="mmr",
@@ -169,32 +218,36 @@ def answer_query_with_llm_filter(user_prompt: str, strategy="mmr") -> str:
     else:
         raise ValueError(f"Unsupported retrieval strategy: {strategy}")
     
-    # Part 1: Retrieve raw documents
-    raw_docs = retriever.get_relevant_documents(user_prompt)
+    # Step 3: Retrieve raw documents using enhanced query
+    raw_docs = retriever.get_relevant_documents(enhanced_query)
     
-    # Step 2: Filter raw documents with LLM
+    # Step 4: Filter raw documents with LLM
     filtered_docs = filter_documents_with_llm(raw_docs, user_prompt)
     
     if not filtered_docs:
         return "Sorry, no relevant documents found to answer your question."
     
-    # Step 3: Create context for final prompt
-    context = "\n\n".join(doc.page_content for doc in filtered_docs)
+    # Step 5: Create context for final prompt with conversation history
+    document_context = "\n\n".join(doc.page_content for doc in filtered_docs)
+    conversation_context = format_chat_history(chat_history, max_turns=3)
     
     final_prompt = f"""
 Answer the question using ONLY the context below. If the answer is not contained within the context, say "I don't know."
 
-Context:
+{"Conversation History:" if conversation_context else ""}
+{conversation_context}
+
+Document Context:
 \"\"\" 
-{context}
+{document_context}
 \"\"\"
 
-Question: {user_prompt}
+Current Question: {user_prompt}
 Answer:"""
     
-    # Step 4: Generate answer with LLM
+    # Step 6: Generate answer with LLM
     response = get_completion_by_messages([
-        {"role": "system", "content": "You are a researcher that answers based ONLY on the sources available to you. Examine what you have thoroughly and do not hallucinate."},
+        {"role": "system", "content": "You are a researcher that answers based ONLY on the sources available to you. Examine what you have thoroughly and do not hallucinate. Consider the conversation history when answering follow-up questions."},
         {"role": "user", "content": final_prompt}
     ])
     
