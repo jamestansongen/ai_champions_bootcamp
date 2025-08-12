@@ -15,7 +15,7 @@ png_path = os.path.join(os.path.dirname(__file__), "..", "flowchart.png")
 
 # Display flowchart if exists
 if os.path.exists(png_path):
-    st.image(png_path, caption="DocuMind flowchart", use_container_width=True)
+    st.image(png_path, caption="DocuMind flowchart", use_column_width=True)
 else:
     st.warning(f"Flowchart not found at: {png_path}")
 <<<<<<< HEAD
