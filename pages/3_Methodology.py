@@ -18,6 +18,7 @@ if os.path.exists(png_path):
     st.image(png_path, caption="DocuMind flowchart", use_container_width=True)
 else:
     st.warning(f"Flowchart not found at: {png_path}")
+<<<<<<< HEAD
 
 # Methodology description
 st.markdown("""
@@ -35,3 +36,5 @@ Prompt engineering safeguards are embedded throughout by instructing the LLM to 
 
 Once this process is complete, the user can pose a relevant question, to which the system will respond with an answer if possible. If it is unable to provide a response, it will return with "I don’t know" and await the next interaction.
 """)
+=======
+>>>>>>> parent of 1429dc3 (final update i hope)

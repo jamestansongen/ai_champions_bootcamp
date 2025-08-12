@@ -17,11 +17,10 @@ The application is password-protected to prevent unauthorised access and uses a 
 to implement a Retrieval Augmented Generation (RAG) pipeline. The application can answer questions based on a static 
 repository of PDF documents as well as PDFs uploaded by the user.
 
-Public officers often manage large volumes of documents, making the review process time-consuming and resource-intensive. 
-This model demonstrates how multiple publications on Singapore's urban development can be consolidated into a central 
-research database as a proof of concept. By leveraging LLM, the system streamlines document review and generates 
-coherent summaries, enabling faster and more efficient access to key insights.
-         
+This model focuses on the domain of Singapore’s urban development, consolidating publications into a central 
+research database. The aim is to present a coherent narrative in this field and streamline the review process, 
+reducing the time officers spend going through large volumes of material.
+
 The project also includes documentation consisting of the following pages:
 - About Us: project scope, objectives, data source, and features.
 - Methodology: explanation of the technical implementation details and a flowchart to illustrate the system workflow.
