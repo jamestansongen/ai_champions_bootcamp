@@ -3,9 +3,12 @@ import os
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import time
 from typing import List, Dict, Any
 =======
+=======
+>>>>>>> parent of 2a32237 (update)
 =======
 >>>>>>> parent of 2a32237 (update)
 =======
@@ -156,6 +159,11 @@ def load_vector_store():
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+# MMR: When you want a balance of relevance and diversity, e.g., in exploratory or general-purpose retrieval.
+
+>>>>>>> parent of 2a32237 (update)
 =======
 # MMR: When you want a balance of relevance and diversity, e.g., in exploratory or general-purpose retrieval.
 
@@ -256,11 +264,14 @@ def answer_query_with_llm_filter(user_prompt: str, chat_history: List[Dict[str, 
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Step 3: Retrieve raw documents using enhanced query
     raw_docs = retriever.get_relevant_documents(enhanced_query)
     
     # Step 4: Filter raw documents with LLM
 =======
+=======
+>>>>>>> parent of 2a32237 (update)
 =======
 >>>>>>> parent of 2a32237 (update)
 =======
@@ -274,6 +285,9 @@ def answer_query_with_llm_filter(user_prompt: str, chat_history: List[Dict[str, 
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of 2a32237 (update)
+=======
 >>>>>>> parent of 2a32237 (update)
 =======
 >>>>>>> parent of 2a32237 (update)
@@ -332,6 +346,7 @@ def process_all_documents(uploaded_file=None):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 @timed
 def process_existing_documents(folder_path="data"):
     """Loads, splits, and persists vector store from static folder"""
@@ -354,6 +369,26 @@ def process_uploaded_document(uploaded_file):
 def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 3) -> List[Document]:
     """Helper function to filter relevant documents to use to answer question"""
 =======
+=======
+@timed
+def process_existing_documents(folder_path="data"):
+    """Loads, splits, and persists vector store from static folder"""
+    folder_docs = load_documents_from_folder(folder_path)
+    chunks = split_documents(folder_docs)
+    persist_vector_store(chunks)
+
+@timed
+def process_uploaded_document(uploaded_file):
+    """Adds an uploaded file to the vector store incrementally"""
+    uploaded_docs = add_uploaded_documents(uploaded_file)
+    chunks = split_documents(uploaded_docs)
+
+    vectordb = load_vector_store()
+    vectordb.add_documents(chunks)
+    persist_vector_store(chunks)  # Optionally re-save index
+
+@timed
+>>>>>>> parent of 2a32237 (update)
 =======
 @timed
 def process_existing_documents(folder_path="data"):
@@ -450,6 +485,7 @@ Is this document useful for answering the question? Reply only with a score of 0
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     return filtered_docs
 
 @timed
@@ -478,6 +514,10 @@ def process_uploaded_document(uploaded_file):
         # If no existing vector store, create new one
         print(f"Creating new vector store: {e}")
         persist_vector_store(chunks)
+=======
+    
+    return filtered_docs
+>>>>>>> parent of 2a32237 (update)
 =======
     
     return filtered_docs
