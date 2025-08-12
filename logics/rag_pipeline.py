@@ -149,7 +149,7 @@ def build_qa_chain(vectordb, strategy="mmr"):
 
     return RetrievalQA.from_llm(llm=llm, retriever=retriever)
 
-# Memory Management Functions
+### Memory Management Functions ###
 
 def format_chat_history(chat_history: List[Dict[str, str]], max_turns: int = 5) -> str:
     """Format chat history for context. Keep only last max_turns exchanges."""
@@ -168,8 +168,8 @@ def format_chat_history(chat_history: List[Dict[str, str]], max_turns: int = 5) 
     
     return "\n".join(formatted_history)
 
-# Enhance user query with conversation context to improve retrieval
 def enhance_query_with_context(user_prompt: str, chat_history: List[Dict[str, str]]) -> str:
+    """Enhance user query with conversation context to improve retrieval."""
     if not chat_history:
         return user_prompt
     
@@ -195,10 +195,10 @@ Enhanced Question (be specific and include relevant context):"""
         print(f"Error enhancing query: {e}")
         return user_prompt
 
-### Step 5/6. Main Functions ###
+### Step 5/6. Main functions with Memory Support ###
 
-# Main function
 def answer_query_with_llm_filter(user_prompt: str, chat_history: List[Dict[str, str]] = None, strategy="mmr") -> str:
+    """Main query function with conversation memory support."""
     if chat_history is None:
         chat_history = []
     
@@ -254,8 +254,8 @@ Answer:"""
     return response
 
 @timed
-# Helper function to filter relevant documents to use to answer question
 def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 3) -> List[Document]:
+    """Helper function to filter relevant documents to use to answer question"""
     filtered_docs = []
     for doc in docs:
         prompt = f"""
@@ -289,20 +289,28 @@ Is this document useful for answering the question? Reply only with a score of 0
     return filtered_docs
 
 @timed
-# Helper function to process preloaded documents
 def process_existing_documents(folder_path="data"):
+    """Helper function to process preloaded documents"""
     """Loads, splits, and persists vector store from static folder"""
     folder_docs = load_documents_from_folder(folder_path)
     chunks = split_documents(folder_docs)
     persist_vector_store(chunks)
 
 @timed
-# Helper function to process optional uploaded documents
 def process_uploaded_document(uploaded_file):
+    """Helper function to process optional uploaded documents"""
     """Adds an uploaded file to the vector store incrementally"""
     uploaded_docs = add_uploaded_documents(uploaded_file)
     chunks = split_documents(uploaded_docs)
 
-    vectordb = load_vector_store()
-    vectordb.add_documents(chunks)
-    persist_vector_store(chunks)
+    # Load existing vector store
+    try:
+        vectordb = load_vector_store()
+        # Add new documents to existing vectorstore
+        new_vectordb = FAISS.from_documents(chunks, embedding_model)
+        vectordb.merge_from(new_vectordb)
+        vectordb.save_local("./faiss_index")
+    except Exception as e:
+        # If no existing vector store, create new one
+        print(f"Creating new vector store: {e}")
+        persist_vector_store(chunks)
