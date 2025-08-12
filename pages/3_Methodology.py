@@ -1,18 +1,24 @@
 import streamlit as st
-import os
 
-# Set page configuration
+# from helper_functions import utility check_password
+from helper_functions.utility import check_password
+
+# Check if the password is correct.  
+if not check_password():  
+    st.stop()
+
+# region <--------- Streamlit App Configuration --------->
 st.set_page_config(
-    page_title="Methodology",
-    layout="centered"
+    layout="centered",
+    page_title="My Streamlit App"
 )
+# endregion <--------- Streamlit App Configuration --------->
 
-# Page title
-st.title("Methodology")
+st.title("About this App")
 
-# Path to the PNG file
-png_path = os.path.join(os.path.dirname(__file__), "..", "flowchart.png")
+st.write("This is a Streamlit App that demonstrates how to use the OpenAI API to generate text completions.")
 
+<<<<<<< HEAD
 # Display flowchart if exists
 if os.path.exists(png_path):
     st.image(png_path, caption="DocuMind flowchart", use_column_width=True)
@@ -44,3 +50,11 @@ Once this process is complete, the user can pose a relevant question, to which t
 >>>>>>> parent of 1429dc3 (final update i hope)
 =======
 >>>>>>> parent of 1429dc3 (final update i hope)
+=======
+with st.expander("How to use this App"):
+    st.write("1. Enter your prompt in the text area.")
+    st.write("2. Click the 'Submit' button.")
+    st.write("3. The app will generate a text completion based on your prompt.")
+
+# Execute the project and add flowchart
+>>>>>>> parent of 2a32237 (update)
