@@ -149,7 +149,7 @@ def build_qa_chain(vectordb, strategy="mmr"):
 
     return RetrievalQA.from_llm(llm=llm, retriever=retriever)
 
-### NEW: Memory Management Functions ###
+# Memory Management Functions
 
 def format_chat_history(chat_history: List[Dict[str, str]], max_turns: int = 5) -> str:
     """Format chat history for context. Keep only last max_turns exchanges."""
@@ -168,8 +168,8 @@ def format_chat_history(chat_history: List[Dict[str, str]], max_turns: int = 5) 
     
     return "\n".join(formatted_history)
 
+# Enhance user query with conversation context to improve retrieval
 def enhance_query_with_context(user_prompt: str, chat_history: List[Dict[str, str]]) -> str:
-    """Enhance user query with conversation context to improve retrieval."""
     if not chat_history:
         return user_prompt
     
@@ -195,10 +195,10 @@ Enhanced Question (be specific and include relevant context):"""
         print(f"Error enhancing query: {e}")
         return user_prompt
 
-### Step 5/6. Enhanced Main Functions with Memory ###
+### Step 5/6. Main Functions ###
 
+# Main function
 def answer_query_with_llm_filter(user_prompt: str, chat_history: List[Dict[str, str]] = None, strategy="mmr") -> str:
-    """Main query function with conversation memory support."""
     if chat_history is None:
         chat_history = []
     
@@ -255,7 +255,7 @@ Answer:"""
 
 @timed
 # Helper function to filter relevant documents to use to answer question
-def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 5) -> List[Document]:
+def filter_documents_with_llm(docs: List[Document], query: str, threshold: int = 3) -> List[Document]:
     filtered_docs = []
     for doc in docs:
         prompt = f"""

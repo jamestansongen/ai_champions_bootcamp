@@ -122,7 +122,7 @@ if submit_button and user_prompt.strip():
             })
             st.session_state['conversation_started'] = True
             
-            # Optional: Limit history to prevent memory bloat
+            # Limit history to prevent memory bloat
             max_history_length = 20  # Keep last 10 Q&A pairs
             if len(st.session_state['chat_history']) > max_history_length:
                 st.session_state['chat_history'] = st.session_state['chat_history'][-max_history_length:]
