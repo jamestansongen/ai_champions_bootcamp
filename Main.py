@@ -11,7 +11,11 @@ from helper_functions.utility import check_password
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Import function to process documents (using the enhanced version with memory)
+=======
+# From helper functions import handle_document_upload
+>>>>>>> parent of 2a32237 (update)
 =======
 # From helper functions import handle_document_upload
 >>>>>>> parent of 2a32237 (update)
@@ -64,8 +68,13 @@ st.title("Streamlit App")
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 if not st.session_state['existing_docs_loaded']:
     with st.spinner("Processing initial documents...this may take a few minutes"):
+=======
+if 'existing_docs_loaded' not in st.session_state:
+    with st.spinner("Processing initial documents..."):
+>>>>>>> parent of 2a32237 (update)
 =======
 if 'existing_docs_loaded' not in st.session_state:
     with st.spinner("Processing initial documents..."):

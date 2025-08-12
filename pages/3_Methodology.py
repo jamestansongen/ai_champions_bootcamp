@@ -23,6 +23,7 @@ st.write("This is a Streamlit App that demonstrates how to use the OpenAI API to
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Display flowchart if exists
 if os.path.exists(png_path):
     st.image(png_path, caption="DocuMind flowchart", use_column_width=True)
@@ -63,6 +64,8 @@ Once this process is complete, the user can pose a relevant question, to which t
 >>>>>>> parent of 2a32237 (update)
 =======
 >>>>>>> parent of 2a32237 (update)
+=======
+>>>>>>> parent of 2a32237 (update)
 with st.expander("How to use this App"):
     st.write("1. Enter your prompt in the text area.")
     st.write("2. Click the 'Submit' button.")
@@ -72,6 +75,10 @@ with st.expander("How to use this App"):
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+# Execute the project and add flowchart
+>>>>>>> parent of 2a32237 (update)
+=======
 # Execute the project and add flowchart
 >>>>>>> parent of 2a32237 (update)
 =======
