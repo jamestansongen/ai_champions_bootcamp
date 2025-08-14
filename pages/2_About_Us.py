@@ -20,7 +20,7 @@ st.write(
 
     Public officers often manage large volumes of documents, making the review process time-consuming and resource-intensive. 
     This model demonstrates how multiple publications on Singapore's urban development can be consolidated into a central 
-    research database as a proof of concept. By leveraging large language models (LLM), the system streamlines document review and generates 
+    research database as a proof of concept. By leveraging large language models (LLMs), the system streamlines document review and generates 
     coherent summaries, enabling faster and more efficient access to key insights.
 
     The project also includes documentation consisting of the following pages:
